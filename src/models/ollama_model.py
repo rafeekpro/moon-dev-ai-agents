@@ -16,6 +16,7 @@ class OllamaModel(BaseModel):
     # Available Ollama models - can be expanded based on what's installed locally
     AVAILABLE_MODELS = [
         "deepseek-r1",      # DeepSeek R1 through Ollama (7B by default)
+        "qwen3:8b",         # Qwen 3 8B model - fast reasoning model
         "gemma:2b",         # Google's Gemma 2B model
         "llama3.2",         # Meta's Llama 3.2 model - fast and efficient
         # implement your own local models through hugging face/ollama here
@@ -115,10 +116,24 @@ class OllamaModel(BaseModel):
             
             if response.status_code == 200:
                 response_data = response.json()
-                content = response_data.get("message", {}).get("content", "")
+                raw_content = response_data.get("message", {}).get("content", "")
+
+                # Remove <think>...</think> tags and their content (Qwen reasoning)
+                import re
+
+                # First, try to remove complete <think>...</think> blocks
+                filtered_content = re.sub(r'<think>.*?</think>', '', raw_content, flags=re.DOTALL).strip()
+
+                # If <think> tag exists but wasn't removed (unclosed tag due to token limit),
+                # remove everything from <think> onwards
+                if '<think>' in filtered_content:
+                    filtered_content = filtered_content.split('<think>')[0].strip()
+
+                # If filtering removed everything, return the original (in case it's not a Qwen model)
+                final_content = filtered_content if filtered_content else raw_content
 
                 return ModelResponse(
-                    content=content,
+                    content=final_content,
                     raw_response=response_data,
                     model_name=self.model_name,
                     usage=None  # Ollama doesn't provide token usage info
@@ -157,6 +172,7 @@ class OllamaModel(BaseModel):
             # For specific known models
             known_models = {
                 "deepseek-r1": "7B",
+                "qwen3:8b": "8B",
                 "gemma:2b": "2B",
                 "llama3.2": "70B"
             }

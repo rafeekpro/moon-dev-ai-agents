@@ -1,5 +1,5 @@
-stochastic rsi 
-bollinger bands + adx
-4 down bars in a row
-quad moving average cross over
-kalman filter + random indicator
+stochastic rsi + Harmonic Patterns
+bollinger bands + adx + Harmonic Patterns
+4 down bars in a row + Harmonic Patterns
+quad moving average cross over + Harmonic Patterns
+kalman filter + random indicator + Harmonic Patterns

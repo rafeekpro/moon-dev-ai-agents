@@ -63,7 +63,7 @@ SWARM_MODELS = {
     # Provider: (enabled, model_type, model_name)
     "claude": (True, "claude", "claude-sonnet-4-5"),  # Claude 4.5 Sonnet - Latest & Greatest!
     "openai": (True, "openai", "gpt-5"),  # GPT-5 - Most advanced model!
-    "gemini": (True, "gemini", "gemini-2.5-flash"),  # Gemini 2.5 Flash - Fast & works with 2048+ tokens!
+    #"ollama_qwen": (True, "ollama", "qwen3:8b"),  # Qwen3 8B via Ollama - Fast local reasoning! (Replaces Gemini)
     "xai": (True, "xai", "grok-4-fast-reasoning"),  # Grok-4 fast reasoning
     "deepseek": (True, "deepseek", "deepseek-chat"),  # DeepSeek for reasoning (API)
     "ollama": (True, "ollama", "DeepSeek-R1:latest"),  # DeepSeek-R1 local model - 90s timeout
@@ -71,7 +71,7 @@ SWARM_MODELS = {
 
 # Default parameters for model queries
 DEFAULT_TEMPERATURE = 0.7
-DEFAULT_MAX_TOKENS = 2048  # Increased for Gemini 2.5 compatibility (needs 2048+ minimum)
+DEFAULT_MAX_TOKENS = 2048  # Increased for model compatibility (Gemini/Groq/Qwen need 2048+ minimum)
 
 # Timeout for each model (seconds)
 MODEL_TIMEOUT = 90
