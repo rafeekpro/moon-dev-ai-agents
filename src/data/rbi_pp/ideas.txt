@@ -1,0 +1,5 @@
+stochastic rsi 
+bollinger bands + adx
+4 down bars in a row
+quad moving average cross over
+kalman filter + random indicator
