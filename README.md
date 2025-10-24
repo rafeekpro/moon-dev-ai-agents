@@ -11,6 +11,8 @@ feel free to join [our discord](https://discord.gg/8UPuVZ53bh) if you beleive ai
 
 ⭐️ [first full concise documentation video (watch here)](https://youtu.be/RlqzkSgDKDc)
 
+⭐️ [second full walkthrough video(watch here)](https://youtu.be/tjY24JR8Cso?si=Za-PQ2L79US6cu2T)
+
 ## Video Updates & Training
 📀 follow all updates here on youtube: https://www.youtube.com/playlist?list=PLXrNVMjRZUJg4M4uz52iGd1LhXXGVbIFz
 
