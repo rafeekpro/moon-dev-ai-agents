@@ -13,6 +13,8 @@ feel free to join [our discord](https://discord.gg/8UPuVZ53bh) if you beleive ai
 
 ⭐️ [second full walkthrough video(watch here)](https://youtu.be/tjY24JR8Cso?si=Za-PQ2L79US6cu2T)
 
+⭐️ [third full walkthrough w/ big updates, new models, new agents(watch here)](https://youtu.be/qZv6IFIkk6I)
+
 ## Video Updates & Training
 📀 follow all updates here on youtube: https://www.youtube.com/playlist?list=PLXrNVMjRZUJg4M4uz52iGd1LhXXGVbIFz
 

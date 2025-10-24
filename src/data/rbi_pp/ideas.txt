@@ -3,3 +3,8 @@ bollinger bands + adx + Harmonic Patterns
 4 down bars in a row + Harmonic Patterns
 quad moving average cross over + Harmonic Patterns
 kalman filter + random indicator + Harmonic Patterns
+stochastic rsi + Harmonic Patterns
+bollingger bands + adx + Harmonic Patterns
+4 downn bars in a row + Harmonic Patterns
+quadf moving average cross over + Harmonic Patterns
+kalmann filter + random indicator + Harmonic Patterns
