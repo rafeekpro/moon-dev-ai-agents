@@ -32,6 +32,7 @@ from src.models.model_factory import ModelFactory
 # Trade filtering
 MIN_TRADE_SIZE_USD = 100  # Only track trades over this amount
 IGNORE_PRICE_THRESHOLD = 0.02  # Ignore trades within X cents of resolution ($0 or $1)
+LOOKBACK_HOURS = 24  # How many hours back to fetch historical trades on startup
 
 # 🌙 Moon Dev - Market category filters (case-insensitive)
 IGNORE_CRYPTO_KEYWORDS = [
@@ -347,6 +348,64 @@ class PolymarketAgent:
         ws_thread.start()
 
         cprint("✅ Moon Dev WebSocket thread started!", "green")
+
+    def fetch_historical_trades(self, hours_back=None):
+        """🌙 Moon Dev - Fetch historical trades from Polymarket API on startup
+
+        Args:
+            hours_back: How many hours back to fetch (defaults to LOOKBACK_HOURS)
+
+        Returns:
+            List of trade dictionaries
+        """
+        if hours_back is None:
+            hours_back = LOOKBACK_HOURS
+
+        try:
+            cprint(f"\n📡 Moon Dev fetching historical trades (last {hours_back}h)...", "yellow")
+
+            # Calculate timestamp for X hours ago
+            cutoff_time = datetime.now() - timedelta(hours=hours_back)
+            cutoff_timestamp = int(cutoff_time.timestamp())
+
+            # Fetch trades from activity stream
+            url = f"{POLYMARKET_API_BASE}/trades"
+            params = {
+                'limit': 1000,  # Max allowed by API
+                '_min_timestamp': cutoff_timestamp
+            }
+
+            response = requests.get(url, params=params, timeout=30)
+            response.raise_for_status()
+
+            trades = response.json()
+            cprint(f"✅ Fetched {len(trades)} total historical trades", "green")
+
+            # Filter and process trades
+            filtered_trades = []
+            for trade in trades:
+                # Get trade info
+                price = float(trade.get('price', 0))
+                size = float(trade.get('size', 0))
+                usd_amount = price * size
+                title = trade.get('title', 'Unknown')
+
+                # Check if we should ignore this market category
+                should_ignore, _ = self.should_ignore_market(title)
+                if should_ignore:
+                    continue
+
+                # Filter by minimum amount and near-resolution prices
+                if usd_amount >= MIN_TRADE_SIZE_USD and not self.is_near_resolution(price):
+                    filtered_trades.append(trade)
+
+            cprint(f"💰 Found {len(filtered_trades)} trades over ${MIN_TRADE_SIZE_USD} (after filters)", "cyan")
+
+            return filtered_trades
+
+        except Exception as e:
+            cprint(f"❌ Error fetching historical trades: {e}", "red")
+            return []
 
     def process_trades(self, trades):
         """Process trades and add new markets to DataFrame
@@ -780,6 +839,12 @@ Provide predictions for each market in the specified format."""
         # Subsequent runs: wait for NEW_MARKETS_FOR_ANALYSIS
         should_analyze = (is_first_run and total_markets > 0) or (new_markets >= NEW_MARKETS_FOR_ANALYSIS)
 
+        # 🌙 Moon Dev - Skip if no markets exist yet
+        if total_markets == 0:
+            cprint(f"\n⏳ No markets in database yet! WebSocket is collecting...", "yellow", attrs=['bold'])
+            cprint(f"   First analysis will run when markets are collected\n", "yellow")
+            return
+
         if should_analyze:
             if is_first_run:
                 cprint(f"\n✅ First run with {total_markets} markets! Running initial AI analysis...\n", "green", attrs=['bold'])
@@ -839,6 +904,7 @@ def main():
     cprint(f"🚫 Ignoring prices within {IGNORE_PRICE_THRESHOLD:.2f} of $0 or $1", "yellow")
     cprint(f"🚫 Filtering out crypto/Bitcoin markets ({len(IGNORE_CRYPTO_KEYWORDS)} keywords)", "red")
     cprint(f"🚫 Filtering out sports markets ({len(IGNORE_SPORTS_KEYWORDS)} keywords)", "red")
+    cprint(f"📜 Lookback period: {LOOKBACK_HOURS} hours (fetches historical data on startup)", "yellow")
     cprint("", "yellow")
     cprint("🔄 REAL-TIME WebSocket MODE:", "green", attrs=['bold'])
     cprint(f"   🌐 WebSocket: {WEBSOCKET_URL}", "cyan")
@@ -855,6 +921,21 @@ def main():
 
     # Initialize agent
     agent = PolymarketAgent()
+
+    # 🌙 Moon Dev - Fetch historical trades on startup to populate database
+    cprint("\n" + "="*80, "yellow")
+    cprint(f"📜 Moon Dev fetching historical data from last {LOOKBACK_HOURS} hours...", "yellow", attrs=['bold'])
+    cprint("="*80, "yellow")
+
+    historical_trades = agent.fetch_historical_trades()
+    if historical_trades:
+        cprint(f"\n📦 Processing {len(historical_trades)} historical trades...", "cyan")
+        agent.process_trades(historical_trades)
+        cprint(f"✅ Database populated with {len(agent.markets_df)} markets", "green")
+    else:
+        cprint("⚠️ No historical trades found - will start fresh from WebSocket", "yellow")
+
+    cprint("="*80 + "\n", "yellow")
 
     # Connect WebSocket (runs in its own thread)
     agent.connect_websocket()
