@@ -53,6 +53,7 @@ import pandas as pd
 from datetime import datetime
 from termcolor import cprint
 import sys
+import argparse  # 🌙 Moon Dev: For command-line args
 from dotenv import load_dotenv
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from threading import Lock, Semaphore
@@ -610,8 +611,8 @@ def log_stats_to_csv(strategy_name: str, thread_id: int, stats: dict, file_path:
                     thread_print("📝 Created new stats CSV with headers", thread_id, "green")
 
                 # Write stats row
-                # 🌙 Moon Dev: Format time as "Oct 25, 2025 06:30:45"
-                timestamp = datetime.now().strftime("%b %d, %Y %H:%M:%S")
+                # 🌙 Moon Dev: Format time as "10/25 06:30"
+                timestamp = datetime.now().strftime("%m/%d %H:%M")
                 writer.writerow([
                     strategy_name,
                     f"T{thread_id:02d}",
@@ -1330,8 +1331,13 @@ def process_trading_idea_parallel(idea: str, thread_id: int) -> dict:
         thread_print(f"❌ FATAL ERROR: {str(e)}", thread_id, "red", attrs=['bold'])
         return {"success": False, "error": str(e), "thread_id": thread_id}
 
-def main():
+def main(ideas_file_path=None, run_name=None):
     """Main parallel processing orchestrator with multi-data testing"""
+    # 🌙 Moon Dev: Use custom ideas file if provided
+    global IDEAS_FILE
+    if ideas_file_path:
+        IDEAS_FILE = Path(ideas_file_path)
+
     cprint(f"\n{'='*60}", "cyan", attrs=['bold'])
     cprint(f"🌟 Moon Dev's RBI AI v3.0 PARALLEL PROCESSOR + MULTI-DATA 🚀", "cyan", attrs=['bold'])
     cprint(f"{'='*60}", "cyan", attrs=['bold'])
@@ -1341,9 +1347,14 @@ def main():
     cprint(f"🔀 Max Parallel Threads: {MAX_PARALLEL_THREADS}", "yellow", attrs=['bold'])
     cprint(f"🐍 Conda env: {CONDA_ENV}", "cyan")
     cprint(f"📂 Data dir: {DATA_DIR}", "magenta")
-    cprint(f"📝 Ideas file: {IDEAS_FILE}\n", "magenta")
+    cprint(f"📝 Ideas file: {IDEAS_FILE}", "magenta")
+    if run_name:
+        cprint(f"📁 Run Name: {run_name}\n", "green", attrs=['bold'])
+    else:
+        cprint("", "white")
 
     if not IDEAS_FILE.exists():
+        cprint(f"❌ Ideas file not found: {IDEAS_FILE}", "red")
         cprint("❌ ideas.txt not found! Creating template...", "red")
         IDEAS_FILE.parent.mkdir(parents=True, exist_ok=True)
         with open(IDEAS_FILE, 'w') as f:
@@ -1443,4 +1454,11 @@ def main():
     cprint(f"{'='*60}\n", "cyan", attrs=['bold'])
 
 if __name__ == "__main__":
-    main()
+    # 🌙 Moon Dev: Parse command-line arguments for custom ideas file and run name
+    parser = argparse.ArgumentParser(description="Moon Dev's RBI Agent - Parallel Backtest Processor")
+    parser.add_argument('--ideas-file', type=str, help='Custom ideas file path (overrides default ideas.txt)')
+    parser.add_argument('--run-name', type=str, help='Run name for folder organization')
+    args = parser.parse_args()
+
+    # Call main with optional parameters
+    main(ideas_file_path=args.ideas_file, run_name=args.run_name)
