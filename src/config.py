@@ -4,7 +4,7 @@ Built with love by Moon Dev 🚀
 """
 
 # 🔄 Exchange Selection
-EXCHANGE = 'solana'  # Options: 'solana', 'hyperliquid'
+EXCHANGE = 'solana'  # Options: 'solana', 'hyperliquid', 'mt5'
 
 # 💰 Trading Configuration
 USDC_ADDRESS = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"  # Never trade or close
@@ -28,12 +28,22 @@ tokens_to_trade = MONITORED_TOKENS  # Using the same list for trading
 HYPERLIQUID_SYMBOLS = ['BTC', 'ETH', 'SOL']  # Symbols to trade on HyperLiquid perps
 HYPERLIQUID_LEVERAGE = 5  # Default leverage for HyperLiquid trades (1-50)
 
+# 📊 MetaTrader 5 (MT5) Configuration
+MT5_INSTRUMENTS = ['EURUSD', 'XAUUSD', 'GBPUSD']  # Forex, Gold, and other MT5 symbols
+MT5_DEFAULT_VOLUME = 0.01  # Default volume in lots (0.01 = micro lot, 0.1 = mini lot, 1.0 = standard lot)
+MT5_MIN_CONFIDENCE = 70  # Minimum AI confidence (0-100) required to execute trades
+MT5_PAPER_TRADING = True  # Set to False for live trading, True for paper/simulation mode
+MT5_USE_STOP_LOSS = True  # Always use stop loss for risk management
+MT5_USE_TAKE_PROFIT = True  # Always use take profit targets
+
 # 🔄 Exchange-Specific Token Lists
 # Use this to determine which tokens/symbols to trade based on active exchange
 def get_active_tokens():
     """Returns the appropriate token/symbol list based on active exchange"""
     if EXCHANGE == 'hyperliquid':
         return HYPERLIQUID_SYMBOLS
+    elif EXCHANGE == 'mt5':
+        return MT5_INSTRUMENTS
     else:
         return MONITORED_TOKENS
 

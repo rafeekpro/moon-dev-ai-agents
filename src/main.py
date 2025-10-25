@@ -21,6 +21,7 @@ from src.agents.risk_agent import RiskAgent
 from src.agents.strategy_agent import StrategyAgent
 from src.agents.copybot_agent import CopyBotAgent
 from src.agents.sentiment_agent import SentimentAgent
+from src.agents.mt5_trading_agent import MT5TradingAgent
 
 # Load environment variables
 load_dotenv()
@@ -32,6 +33,7 @@ ACTIVE_AGENTS = {
     'strategy': False,  # Strategy-based trading agent
     'copybot': False,   # CopyBot agent
     'sentiment': False, # Run sentiment_agent.py directly instead
+    'mt5': False,       # MetaTrader 5 trading agent (GOLD, EURUSD, CFD stocks)
     # whale_agent is run from whale_agent.py
     # Add more agents here as we build them:
     # 'portfolio': False,  # Future portfolio optimization agent
@@ -46,6 +48,7 @@ def run_agents():
         strategy_agent = StrategyAgent() if ACTIVE_AGENTS['strategy'] else None
         copybot_agent = CopyBotAgent() if ACTIVE_AGENTS['copybot'] else None
         sentiment_agent = SentimentAgent() if ACTIVE_AGENTS['sentiment'] else None
+        mt5_agent = MT5TradingAgent() if ACTIVE_AGENTS['mt5'] else None
 
         while True:
             try:
@@ -76,6 +79,11 @@ def run_agents():
                 if sentiment_agent:
                     cprint("\n🎭 Running Sentiment Analysis...", "cyan")
                     sentiment_agent.run()
+
+                # Run MT5 Trading Agent
+                if mt5_agent:
+                    cprint("\n💰 Running MT5 Trading Agent (GOLD/EURUSD/CFD)...", "cyan")
+                    mt5_agent.run()
 
                 # Sleep until next cycle
                 next_run = datetime.now() + timedelta(minutes=SLEEP_BETWEEN_RUNS_MINUTES)
