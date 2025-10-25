@@ -1,19 +1,24 @@
 """
-🌙 Moon Dev's RBI AI v3.0 PARALLEL PROCESSOR 🚀
+🌙 Moon Dev's RBI AI v3.0 PARALLEL PROCESSOR + MULTI-DATA TESTING 🚀
 Built with love by Moon Dev 🚀
 
-PARALLEL PROCESSING: Run up to 5 backtests simultaneously!
+PARALLEL PROCESSING + MULTI-DATA VALIDATION: Run up to 5 backtests simultaneously,
+each tested on 25+ different data sources!
+
 - Each thread processes a different trading idea
 - Thread-safe colored output
 - Rate limiting to avoid API throttling
 - Massively faster than sequential processing
+- 🆕 AUTOMATIC MULTI-DATA TESTING on 25+ data sources (BTC, ETH, SOL, AAPL, TSLA, ES, NQ, etc.)
 
 HOW IT WORKS:
 1. Reads trading ideas from ideas.txt
 2. Spawns up to MAX_PARALLEL_THREADS workers
 3. Each thread independently: Research → Backtest → Debug → Optimize
-4. All threads run simultaneously until target returns are hit
-5. Thread-safe file naming with unique 2-digit thread IDs
+4. 🆕 Each successful backtest automatically tests on 25+ data sources!
+5. All threads run simultaneously until target returns are hit
+6. Thread-safe file naming with unique 2-digit thread IDs
+7. 🆕 Multi-data results saved to ./results/ folders for each strategy
 
 NEW FEATURES:
 - 🎨 Color-coded output per thread (Thread 1 = cyan, Thread 2 = magenta, etc.)
@@ -21,11 +26,14 @@ NEW FEATURES:
 - 🔒 Thread-safe file operations
 - 📊 Real-time progress tracking across all threads
 - 💾 Clean file organization with thread IDs in names
+- 🆕 📈 MULTI-DATA TESTING: Validates strategies on 25+ assets/timeframes automatically!
+- 🆕 📊 CSV results showing performance across all data sources
 
 Required Setup:
 1. Conda environment 'tflow' with backtesting packages
 2. Set MAX_PARALLEL_THREADS (default: 5)
-3. Run and watch all ideas process in parallel! 🚀💰
+3. Multi-data tester at: /Users/md/Dropbox/dev/github/moon-dev-trading-bots/backtests/multi_data_tester.py
+4. Run and watch all ideas process in parallel with multi-data validation! 🚀💰
 
 IMPORTANT: Each thread is fully independent and won't interfere with others!
 """
@@ -131,9 +139,9 @@ DEEPSEEK_BASE_URL = "https://api.deepseek.com"
 # Get today's date for organizing outputs
 TODAY_DATE = datetime.now().strftime("%m_%d_%Y")
 
-# Update data directory paths - Parallel version uses its own folder
+# Update data directory paths - Parallel Multi-Data version uses its own folder
 PROJECT_ROOT = Path(__file__).parent.parent
-DATA_DIR = PROJECT_ROOT / "data/rbi_pp"
+DATA_DIR = PROJECT_ROOT / "data/rbi_pp_multi"
 TODAY_DIR = DATA_DIR / TODAY_DATE
 RESEARCH_DIR = TODAY_DIR / "research"
 BACKTEST_DIR = TODAY_DIR / "backtests"
@@ -301,6 +309,38 @@ datetime, open, high, low, close, volume,
 2023-01-01 00:15:00, 16509.78, 16534.66, 16509.11, 16533.43, 308.12276951,
 
 Always add plenty of Moon Dev themed debug prints with emojis to make debugging easier! 🌙 ✨ 🚀
+
+MULTI-DATA TESTING REQUIREMENT:
+At the VERY END of your code (after all strategy definitions), you MUST add this EXACT block:
+
+```python
+# 🌙 MOON DEV'S MULTI-DATA TESTING FRAMEWORK 🚀
+# Tests this strategy on 25+ data sources automatically!
+if __name__ == "__main__":
+    import sys
+    import os
+
+    # Import the multi-data tester from Moon Dev's trading bots repo
+    sys.path.append('/Users/md/Dropbox/dev/github/moon-dev-trading-bots/backtests')
+    from multi_data_tester import test_on_all_data
+
+    print("\\n" + "="*80)
+    print("🚀 MOON DEV'S MULTI-DATA BACKTEST - Testing on 25+ Data Sources!")
+    print("="*80)
+
+    # Test this strategy on all configured data sources
+    # This will test on: BTC, ETH, SOL (multiple timeframes), AAPL, TSLA, ES, NQ, GOOG, NVDA
+    results = test_on_all_data(YourStrategyClassName, 'YourStrategyName')
+
+    if results is not None:
+        print("\\n✅ Multi-data testing complete! Results saved in ./results/ folder")
+        print(f"📊 Tested on {len(results)} different data sources")
+    else:
+        print("\\n⚠️ No results generated - check for errors above")
+```
+
+IMPORTANT: Replace 'YourStrategyClassName' with your actual strategy class name!
+IMPORTANT: Replace 'YourStrategyName' with a descriptive name for the CSV output!
 
 FOR THE PYTHON BACKTESTING LIBRARY USE BACKTESTING.PY AND SEND BACK ONLY THE CODE, NO OTHER TEXT.
 ONLY SEND BACK CODE, NO OTHER TEXT.
@@ -1198,9 +1238,9 @@ def process_trading_idea_parallel(idea: str, thread_id: int) -> dict:
         return {"success": False, "error": str(e), "thread_id": thread_id}
 
 def main():
-    """Main parallel processing orchestrator"""
+    """Main parallel processing orchestrator with multi-data testing"""
     cprint(f"\n{'='*60}", "cyan", attrs=['bold'])
-    cprint(f"🌟 Moon Dev's RBI AI v3.0 PARALLEL PROCESSOR 🚀", "cyan", attrs=['bold'])
+    cprint(f"🌟 Moon Dev's RBI AI v3.0 PARALLEL PROCESSOR + MULTI-DATA 🚀", "cyan", attrs=['bold'])
     cprint(f"{'='*60}", "cyan", attrs=['bold'])
 
     cprint(f"\n📅 Date: {TODAY_DATE}", "magenta")

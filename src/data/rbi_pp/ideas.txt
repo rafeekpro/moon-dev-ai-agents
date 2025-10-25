@@ -1,10 +1,14 @@
-stochastic rsi + Harmonic Patterns
-bollinger bands + adx + Harmonic Patterns
-4 down bars in a row + Harmonic Patterns
-quad moving average cross over + Harmonic Patterns
-kalman filter + random indicator + Harmonic Patterns
-stochastic rsi + Harmonic Patterns
-bollingger bands + adx + Harmonic Patterns
-4 downn bars in a row + Harmonic Patterns
-quadf moving average cross over + Harmonic Patterns
-kalmann filter + random indicator + Harmonic Patterns
+money flow inidicator
+exhaustion gap strategy
+bollinger band mean reversion 
+intraday bollinger bands 
+donchain channel long only
+bollinger + rsi 
+adx long only 
+macd + adx 
+macd + bollinger
+intraday bollinger with adx confirmation 
+fast macd + adx trend following 
+Volatility-Adjusted Trend Following ATR
+adaptive trend Kaufman Adaptive Moving Average
+bollinger band mean reversion 
