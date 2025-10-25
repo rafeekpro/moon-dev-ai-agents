@@ -1,14 +1,18 @@
-money flow inidicator
-exhaustion gap strategy
-bollinger band mean reversion 
-intraday bollinger bands 
-donchain channel long only
-bollinger + rsi 
-adx long only 
-macd + adx 
-macd + bollinger
-intraday bollinger with adx confirmation 
-fast macd + adx trend following 
-Volatility-Adjusted Trend Following ATR
-adaptive trend Kaufman Adaptive Moving Average
-bollinger band mean reversion 
+the best money flow inidicators
+the best exhaustion gap strategys
+the best bollinger band mean reversion s
+the best intraday bollinger band
+the best donchain channel long only !
+the best bollinger + rsi !
+the best adx long only !
+the best macd + adx !
+the best macd + bollinger!
+the best intraday bollinger with adx confirmation !
+the best fast macd + adx trend following! 
+the best Volatility-Adjusted Trend Following ATR!
+the best adaptive trend Kaufman Adaptive Moving Average!
+the best bollinger band mean reversion !
+the best Kelly Criterion for position sizing!
+the best Maximum Adverse Excursion (MAE) per trade!
+the best Drawdown duration (not just depth)!
+the best Renko + Supertrend!

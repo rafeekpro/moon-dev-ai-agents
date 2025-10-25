@@ -49,6 +49,7 @@ import time
 import re
 import hashlib
 import csv
+import pandas as pd
 from datetime import datetime
 from termcolor import cprint
 import sys
@@ -78,8 +79,8 @@ except ImportError as e:
 # ============================================
 # 🎯 PARALLEL PROCESSING CONFIGURATION
 # ============================================
-MAX_PARALLEL_THREADS = 5  # How many ideas to process simultaneously
-RATE_LIMIT_DELAY = 2  # Seconds to wait between API calls (per thread)
+MAX_PARALLEL_THREADS = 18  # How many ideas to process simultaneously
+RATE_LIMIT_DELAY = .5  # Seconds to wait between API calls (per thread)
 RATE_LIMIT_GLOBAL_DELAY = 0.5  # Global delay between any API calls
 
 # Thread color mapping
@@ -281,7 +282,9 @@ BACKTEST EXECUTION ORDER:
 2. Print full stats using print(stats) and print(stats._strategy)
 3. no optimization code needed, just print the final stats, make sure full stats are printed, not just part or some. stats = bt.run() print(stats) is an example of the last line of code. no need for plotting ever.
 
-do not creeate charts to plot this, just print stats. no charts needed.
+❌ NEVER USE bt.plot() - IT CAUSES TIMEOUTS IN PARALLEL PROCESSING!
+❌ NO PLOTTING, NO CHARTS, NO VISUALIZATIONS!
+✅ ONLY PRINT STATS TO CONSOLE!
 
 CRITICAL POSITION SIZING RULE:
 When calculating position sizes in backtesting.py, the size parameter must be either:
@@ -330,7 +333,8 @@ if __name__ == "__main__":
 
     # Test this strategy on all configured data sources
     # This will test on: BTC, ETH, SOL (multiple timeframes), AAPL, TSLA, ES, NQ, GOOG, NVDA
-    results = test_on_all_data(YourStrategyClassName, 'YourStrategyName')
+    # IMPORTANT: verbose=False to prevent plotting (causes timeouts in parallel processing!)
+    results = test_on_all_data(YourStrategyClassName, 'YourStrategyName', verbose=False)
 
     if results is not None:
         print("\\n✅ Multi-data testing complete! Results saved in ./results/ folder")
@@ -516,7 +520,7 @@ def parse_return_from_output(stdout: str, thread_id: int) -> float:
 def parse_all_stats_from_output(stdout: str, thread_id: int) -> dict:
     """
     🌙 Moon Dev's Stats Parser - Extract all key stats from backtest output!
-    Returns dict with: return_pct, buy_hold_pct, max_drawdown_pct, sharpe, sortino, expectancy
+    Returns dict with: return_pct, buy_hold_pct, max_drawdown_pct, sharpe, sortino, expectancy, trades
     """
     stats = {
         'return_pct': None,
@@ -524,7 +528,8 @@ def parse_all_stats_from_output(stdout: str, thread_id: int) -> dict:
         'max_drawdown_pct': None,
         'sharpe': None,
         'sortino': None,
-        'expectancy': None
+        'expectancy': None,
+        'trades': None
     }
 
     try:
@@ -560,17 +565,23 @@ def parse_all_stats_from_output(stdout: str, thread_id: int) -> dict:
         if match:
             stats['expectancy'] = float(match.group(1))
 
-        thread_print(f"📊 Extracted {sum(1 for v in stats.values() if v is not None)}/6 stats", thread_id)
+        # # Trades
+        match = re.search(r'# Trades\s+(\d+)', stdout)
+        if match:
+            stats['trades'] = int(match.group(1))
+
+        thread_print(f"📊 Extracted {sum(1 for v in stats.values() if v is not None)}/7 stats", thread_id)
         return stats
 
     except Exception as e:
         thread_print(f"❌ Error parsing stats: {str(e)}", thread_id, "red")
         return stats
 
-def log_stats_to_csv(strategy_name: str, iteration: int, thread_id: int, stats: dict, file_path: str) -> None:
+def log_stats_to_csv(strategy_name: str, thread_id: int, stats: dict, file_path: str, data_source: str = "BTC-USD-15m.csv") -> None:
     """
     🌙 Moon Dev's CSV Logger - Thread-safe stats logging!
     Appends backtest stats to CSV for easy analysis and comparison
+    Now includes data source tracking for multi-data testing!
     """
     try:
         with file_lock:
@@ -584,24 +595,25 @@ def log_stats_to_csv(strategy_name: str, iteration: int, thread_id: int, stats: 
                 if not file_exists:
                     writer.writerow([
                         'Strategy Name',
-                        'Iteration',
                         'Thread ID',
                         'Return %',
                         'Buy & Hold %',
                         'Max Drawdown %',
                         'Sharpe Ratio',
                         'Sortino Ratio',
-                        'Expectancy %',
+                        'EV %',  # 🌙 Moon Dev: Changed from Expectancy %
+                        'Trades',  # 🌙 Moon Dev: Added # Trades
                         'File Path',
-                        'Timestamp'
+                        'Data',  # 🌙 Moon Dev: Changed from Data Source
+                        'Time'   # 🌙 Moon Dev: Changed from Timestamp
                     ])
                     thread_print("📝 Created new stats CSV with headers", thread_id, "green")
 
                 # Write stats row
-                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                # 🌙 Moon Dev: Format time as "Oct 25, 2025 06:30:45"
+                timestamp = datetime.now().strftime("%b %d, %Y %H:%M:%S")
                 writer.writerow([
                     strategy_name,
-                    iteration,
                     f"T{thread_id:02d}",
                     stats.get('return_pct', 'N/A'),
                     stats.get('buy_hold_pct', 'N/A'),
@@ -609,14 +621,79 @@ def log_stats_to_csv(strategy_name: str, iteration: int, thread_id: int, stats: 
                     stats.get('sharpe', 'N/A'),
                     stats.get('sortino', 'N/A'),
                     stats.get('expectancy', 'N/A'),
+                    stats.get('trades', 'N/A'),  # 🌙 Moon Dev: Added # Trades
                     str(file_path),
+                    data_source,
                     timestamp
                 ])
 
-                thread_print(f"✅ Logged stats to CSV (Return: {stats.get('return_pct', 'N/A')}%)", thread_id, "green")
+                thread_print(f"✅ Logged stats to CSV (Return: {stats.get('return_pct', 'N/A')}% on {data_source})", thread_id, "green")
 
     except Exception as e:
         thread_print(f"❌ Error logging to CSV: {str(e)}", thread_id, "red")
+
+def parse_and_log_multi_data_results(strategy_name: str, thread_id: int, backtest_file_path: Path) -> None:
+    """
+    🌙 Moon Dev's Multi-Data Results Parser!
+    Parses the multi-data testing results CSV and logs all results that pass the threshold
+
+    Args:
+        strategy_name: Name of the strategy
+        thread_id: Thread ID
+        backtest_file_path: Path to the backtest file that was executed
+    """
+    try:
+        # Multi-data results are saved in ./results/ relative to the backtest file
+        backtest_dir = backtest_file_path.parent
+        results_dir = backtest_dir / "results"
+        results_csv = results_dir / f"{strategy_name}.csv"
+
+        # Check if results exist
+        if not results_csv.exists():
+            thread_print(f"⚠️ No multi-data results found at {results_csv}", thread_id, "yellow")
+            return
+
+        # Read the results CSV
+        df = pd.read_csv(results_csv)
+
+        thread_print(f"📊 Found {len(df)} multi-data test results", thread_id, "cyan")
+
+        # Filter for results that pass the threshold
+        passing_results = df[df['Return_%'] > SAVE_IF_OVER_RETURN]
+
+        if len(passing_results) == 0:
+            thread_print(f"⚠️ No multi-data results passed {SAVE_IF_OVER_RETURN}% threshold", thread_id, "yellow")
+            return
+
+        thread_print(f"✅ {len(passing_results)} data sources passed threshold!", thread_id, "green", attrs=['bold'])
+
+        # Log each passing result to the main stats CSV
+        for idx, row in passing_results.iterrows():
+            stats = {
+                'return_pct': row['Return_%'],
+                'buy_hold_pct': row.get('Buy_Hold_%', None),
+                'max_drawdown_pct': row.get('Max_DD_%', None),
+                'sharpe': row.get('Sharpe', None),
+                'sortino': row.get('Sortino', None),
+                'expectancy': row.get('Expectancy_%', None),
+                'trades': row.get('Trades', None)  # 🌙 Moon Dev: Added # Trades
+            }
+
+            data_source = row['Data_Source']
+
+            # Log to CSV with the specific data source
+            log_stats_to_csv(
+                strategy_name,
+                thread_id,
+                stats,
+                str(backtest_file_path),
+                data_source=data_source
+            )
+
+        thread_print(f"💾 Logged {len(passing_results)} multi-data results to CSV!", thread_id, "green", attrs=['bold'])
+
+    except Exception as e:
+        thread_print(f"❌ Error parsing multi-data results: {str(e)}", thread_id, "red")
 
 def save_backtest_if_threshold_met(code: str, stats: dict, strategy_name: str, iteration: int, thread_id: int, phase: str = "debug") -> bool:
     """
@@ -664,7 +741,7 @@ def save_backtest_if_threshold_met(code: str, stats: dict, strategy_name: str, i
         thread_print(f"💾 Saved to working & final! Return: {return_pct:.2f}%", thread_id, "green", attrs=['bold'])
 
         # Log to CSV
-        log_stats_to_csv(strategy_name, iteration, thread_id, stats, str(working_file))
+        log_stats_to_csv(strategy_name, thread_id, stats, str(working_file))
 
         return True
 
@@ -1089,6 +1166,14 @@ def process_trading_idea_parallel(idea: str, thread_id: int) -> dict:
                         phase="debug"
                     )
 
+                    # 🌙 Moon Dev: Parse and log multi-data results!
+                    thread_print("🔍 Checking for multi-data test results...", thread_id, "cyan")
+                    parse_and_log_multi_data_results(
+                        strategy_name,
+                        thread_id,
+                        current_file
+                    )
+
                     thread_print(f"📊 Return: {current_return}% | Target: {TARGET_RETURN}%", thread_id)
 
                     if current_return >= TARGET_RETURN:
@@ -1165,6 +1250,14 @@ def process_trading_idea_parallel(idea: str, thread_id: int) -> dict:
                                     optimization_iteration,
                                     thread_id,
                                     phase="opt"
+                                )
+
+                                # 🌙 Moon Dev: Parse and log multi-data results from optimization!
+                                thread_print("🔍 Checking for multi-data test results...", thread_id, "cyan")
+                                parse_and_log_multi_data_results(
+                                    strategy_name,
+                                    thread_id,
+                                    opt_file
                                 )
 
                                 if new_return >= TARGET_RETURN:
